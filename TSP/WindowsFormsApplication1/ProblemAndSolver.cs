@@ -373,12 +373,19 @@ namespace TSP
         /// <summary>
         /// performs a Branch and Bound search of the state space of partial tours
         /// stops when time limit expires and uses BSSF as solution
+        /// Time complexity is O(2^n * n^2) because it has to expand 2^n possible
+        /// MatrixNode's which take approximately O(n^2) time to Expand.
+        /// I wrote that the expand function is worst case O(n^3) but that is
+        /// only if there are n cities left unvisited, which is not going to be
+        /// the case most of the time.  So on average it will turn out to be closer
+        /// to O(n^2).
+        /// The space complexity is O(n^2 * 2^n) for 2^n nodes and n^2 for each node.  
         /// </summary>
         /// <returns>results array for GUI that contains three ints: cost of solution, time spent to find solution, number of solutions found during search (not counting initial BSSF estimate)</returns>
         public string[] bBSolveProblem()
         {
             string[] results = new string[3];
-            int count = 0;
+            int count = 0, max_stack = 0;
             Random rnd = new Random();
             Stopwatch timer = new Stopwatch();
 
@@ -389,43 +396,58 @@ namespace TSP
             List<MatrixNode> problems = new List<MatrixNode>();
             problems.Add(root);
             MatrixNode head;
-            List<MatrixNode> children = new List<MatrixNode>();
+            List<MatrixNode> children;
             while (problems.Count > 0) // while there are still unseen branches
             {
                 if (timer.ElapsedMilliseconds > time_limit)
                     break;
+                if (problems.Count < max_stack)
+                    max_stack = problems.Count;
 
                 head = problems[0];
                 problems.RemoveAt(0);
-                if (head.isCompletePath())
+                if (head.Reduction < upperBound)
                 {
-                    List<int> temp = head.FinishPath();
-                    if (head.Reduction < upperBound)
+                    if (head.isCompletePath())
                     {
-                        upperBound = head.Reduction;
-                        Route = new ArrayList();
-                        foreach (int item in temp)
+                        List<int> temp = head.FinishPath();
+                        if (head.Reduction < upperBound)
                         {
-                            Route.Add(Cities[item]);
+                            upperBound = head.Reduction;
+                            Route = new ArrayList();
+                            foreach (int item in temp)
+                            {
+                                Route.Add(Cities[item]);
+                            }
+                            bssf = new TSPSolution(Route);
+                            count++;
                         }
-                        bssf = new TSPSolution(Route);
-                        count++;
                     }
+                    else
+                    {
+                        children = head.Expand(upperBound);
+                        children.AddRange(problems);
+                        problems = children;
+                    }
+                }else {
+                    MatrixNode.pruned++;
                 }
-                else
-                {
-                    children = head.Expand(upperBound);
-                    children.AddRange(problems);
-                    problems = children;
-                }
+
             }
-            
+
             // End of my solution
             timer.Stop();
 
             results[COST] = costOfBssf().ToString();                          // load results array
             results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = count.ToString();
+
+            Console.Write("max_stack: ");
+            Console.Writeline(max_stack);
+            Console.Write("total_count: ");
+            Console.Writeline(MatrixNode.total_count);
+            Console.Write("pruned: ");
+            Console.Writeline(MatrixNode.pruned);
 
             return results;
         }
