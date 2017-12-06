@@ -391,6 +391,8 @@ namespace TSP
 
             timer.Start();
             // My solution for branch and bound: Iain
+            MatrixNode.total_count = 0;
+            MatrixNode.pruned = 0;
             MatrixNode root = new MatrixNode(Cities);
             double lowB = root.Reduce(), upperBound = Double.PositiveInfinity;
             List<MatrixNode> problems = new List<MatrixNode>();
@@ -401,7 +403,7 @@ namespace TSP
             {
                 if (timer.ElapsedMilliseconds > time_limit)
                     break;
-                if (problems.Count < max_stack)
+                if (problems.Count > max_stack)
                     max_stack = problems.Count;
 
                 head = problems[0];
@@ -411,7 +413,7 @@ namespace TSP
                     if (head.isCompletePath())
                     {
                         List<int> temp = head.FinishPath();
-                        if (head.Reduction < upperBound)
+                        if (head.Reduction < upperBound && temp != null && Cities[temp[temp.Count-1]].costToGetTo(Cities[temp[0]]) != Double.PositiveInfinity)
                         {
                             upperBound = head.Reduction;
                             Route = new ArrayList();
@@ -443,11 +445,11 @@ namespace TSP
             results[COUNT] = count.ToString();
 
             Console.Write("max_stack: ");
-            Console.Writeline(max_stack);
+            Console.WriteLine(max_stack);
             Console.Write("total_count: ");
-            Console.Writeline(MatrixNode.total_count);
+            Console.WriteLine(MatrixNode.total_count);
             Console.Write("pruned: ");
-            Console.Writeline(MatrixNode.pruned);
+            Console.WriteLine(MatrixNode.pruned);
 
             return results;
         }

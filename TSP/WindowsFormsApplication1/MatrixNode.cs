@@ -15,6 +15,7 @@ namespace TSP
         private int n;
         private double[,] matrix;
         private double reduction;
+        private bool hasZero;
 
         public double Reduction
         {
@@ -162,9 +163,13 @@ namespace TSP
         // O(n^2) time complexity to check for non-zeroes
         public bool isCompletePath()
         {
+            hasZero = false;
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    if (matrix[i,j] != 0 && matrix[i,j] != Double.PositiveInfinity) {
+                    if (matrix[i, j] == 0) {
+                        hasZero = true;
+                    }
+                    else if (matrix[i, j] != Double.PositiveInfinity) {
                         return false;
                     }
                 }
@@ -174,8 +179,8 @@ namespace TSP
 
         public List<int> FinishPath()
         {
-            if(!isCompletePath()) { // there are non-zeroes, so it doesn't work
-                return null;
+            if(!hasZero) { // there are no zeroes, the current path is finished
+                return path;
             }
 
             foreach (int item in unvisited) {
